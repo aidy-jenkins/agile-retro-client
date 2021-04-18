@@ -1,11 +1,11 @@
 {
     "compilerOptions": {
-      "module": "commonjs",
-      "noImplicitAny": true,
+      "module": "es2020",
+      "noImplicitAny": false,
       "removeComments": false,
       "preserveConstEnums": true,
       "sourceMap": false,
-      "target": "es6",
+      "target": "es2020",
       "declaration": false,
     },
     "include": ["src/**/*"],
