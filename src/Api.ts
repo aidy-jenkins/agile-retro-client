@@ -1,5 +1,3 @@
-import {Config} from "Config.js";
-
 export module Api {
     export let baseUri = null as string;
     export let roomCode = null as string;
