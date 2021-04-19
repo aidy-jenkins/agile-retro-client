@@ -8,6 +8,7 @@ interface Category {
     sendButton: HTMLInputElement;
     textInput: HTMLInputElement;
     submitted: HTMLDivElement;
+    title: HTMLDivElement;
 }
 
 export class Index {
@@ -38,10 +39,12 @@ export class Index {
         this.categories = categories.map(category => this.makeCategory(templateNode, category));
 
         for(let category of this.categories) {
-            let {textInput, sendButton} = category;
+            let {textInput, sendButton, title} = category;
 
             textInput.addEventListener("keypress", e => this.text_keypress(category, e));
             sendButton.addEventListener("click", e => this.send_click(category, e));
+
+            title.textContent = category.name;
 
             document.body.appendChild(category.container);
         }
@@ -57,7 +60,8 @@ export class Index {
             container: categoryNode,
             textInput: categoryNode.getElementsByClassName("textInput")[0] as HTMLInputElement,
             sendButton: categoryNode.getElementsByClassName("sendButton")[0] as HTMLInputElement,
-            submitted: categoryNode.getElementsByClassName("submitted")[0] as HTMLDivElement
+            submitted: categoryNode.getElementsByClassName("submitted")[0] as HTMLDivElement,
+            title: categoryNode.getElementsByClassName("title")[0] as HTMLDivElement
         } as Category;
     }
 
@@ -78,7 +82,7 @@ export class Index {
         category.textInput.focus();
 
         try {
-            await Api.addItems("default", input);
+            await Api.addItems(category.name, input);
         }
         catch(err) {
             this.appendError(category, `Failed to send item ${input}; Error: ${err?.message ?? err}`);
