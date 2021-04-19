@@ -1,6 +1,8 @@
+import {Config} from "Config.js";
+
 export module Api {
-    export let baseUri = "";
-    export let roomCode = "";
+    export let baseUri = null as string;
+    export let roomCode = null as string;
 
     export async function addItems(category: string, ...items: string[]) {
         let response = await sendRequest(`${baseUri}/room/${roomCode}/category/${category}/items`, "POST", { items })

@@ -33,6 +33,10 @@ http.createServer(function (request, response) {
             break;
     }
 
+    let query = filePath.indexOf('?');
+    if(query > 0)
+        filePath = filePath.substr(0, query);
+
     fs.readFile(filePath, function (error, content) {
         if (error) {
             if (error.code == 'ENOENT') {
