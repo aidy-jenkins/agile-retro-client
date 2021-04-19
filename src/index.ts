@@ -2,16 +2,22 @@ import { Api } from "./Api.js";
 import { Config } from "./Config.js";
 import { Query } from "./Query.js";
 
+interface Category {
+    container: HTMLDivElement;
+    name: string;
+    sendButton: HTMLInputElement;
+    textInput: HTMLInputElement;
+    submitted: HTMLDivElement;
+}
+
 export class Index {
-    textInput = document.getElementById("textInput") as HTMLInputElement;
-    sendButton = document.getElementById("sendButton") as HTMLInputElement;
-    submitted = document.getElementsByClassName("submitted")[0] as HTMLDivElement;
+
+    static readonly MAX_CATEGORY_COUNT = 4;
+
+    categories: Category[];
     roomCode: string;
     
     constructor(config: Config.ClientConfig) {
-        this.sendButton.addEventListener("click", e => this.send_click(e));
-        this.textInput.addEventListener("keypress", e => this.text_keypress(e));
-
         let query = new Query(window.location.search);
         this.roomCode = query.get("roomCode");
         if(!this.roomCode)
@@ -19,35 +25,69 @@ export class Index {
 
         Api.roomCode = this.roomCode;
         Api.baseUri = config.apiUri;
+
+        this.init();
     }
 
-    appendError(message: string) {
+    async init() {
+        let categories = await Api.getCategories();
+        if(categories.length > Index.MAX_CATEGORY_COUNT)
+            categories = categories.slice(0, 3);
+
+        let templateNode = document.getElementsByClassName("template")[0] as HTMLDivElement;
+        this.categories = categories.map(category => this.makeCategory(templateNode, category));
+
+        for(let category of this.categories) {
+            let {textInput, sendButton} = category;
+
+            textInput.addEventListener("keypress", e => this.text_keypress(category, e));
+            sendButton.addEventListener("click", e => this.send_click(category, e));
+
+            document.body.appendChild(category.container);
+        }
+    }
+
+    private makeCategory(templateNode: HTMLDivElement, category: string) {
+        let categoryNode = templateNode.cloneNode(true) as HTMLDivElement;
+        categoryNode.dataset["category"] = category;
+        categoryNode.className = "category";
+        categoryNode.style.display = "";
+        return {
+            name: category,
+            container: categoryNode,
+            textInput: categoryNode.getElementsByClassName("textInput")[0] as HTMLInputElement,
+            sendButton: categoryNode.getElementsByClassName("sendButton")[0] as HTMLInputElement,
+            submitted: categoryNode.getElementsByClassName("submitted")[0] as HTMLDivElement
+        } as Category;
+    }
+
+    private appendError(category: Category, message: string) {
         let errorItem = document.createElement("div");
         errorItem.textContent = message;
-        this.submitted.appendChild(errorItem);
+        category.submitted.appendChild(errorItem);
     }
 
-    async send_click(e: MouseEvent) {
-        let input = this.textInput.value;
+    private async send_click(category: Category, e: MouseEvent) {
+        let input = category.textInput.value;
         
         let newItem = document.createElement("div");
         newItem.textContent = input;
-        this.submitted.appendChild(newItem);
+        category.submitted.appendChild(newItem);
         
-        this.textInput.value = "";
-        this.textInput.focus();
+        category.textInput.value = "";
+        category.textInput.focus();
 
         try {
             await Api.addItems("default", input);
         }
         catch(err) {
-            this.appendError(`Failed to send item ${input}; Error: ${err?.message ?? err}`);
+            this.appendError(category, `Failed to send item ${input}; Error: ${err?.message ?? err}`);
         }
     }
 
-    text_keypress(e: KeyboardEvent) {
+    private text_keypress(category: Category, e: KeyboardEvent) {
         if(e.key == "Enter")
-            this.send_click(null);
+            this.send_click(category, null);
     }
 }
 
